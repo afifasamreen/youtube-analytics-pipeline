@@ -13,19 +13,12 @@
 				}
 			],
 			"sinks": [],
-			"transformations": [
-				{
-					"name": "flatten1"
-				}
-			],
+			"transformations": [],
 			"scriptLines": [
 				"source(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false,",
-				"     documentForm: 'documentPerLine') ~> AllVideosSource",
-				"AllVideosSource foldDown(unroll(),",
-				"     skipDuplicateMapInputs: false,",
-				"     skipDuplicateMapOutputs: false) ~> flatten1"
+				"     documentForm: 'documentPerLine') ~> AllVideosSource"
 			]
 		}
 	}

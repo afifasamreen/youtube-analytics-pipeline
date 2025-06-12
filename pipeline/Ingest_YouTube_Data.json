@@ -68,7 +68,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@activity('LookupActivity').output",
+						"value": "@activity('LookupActivity').output.item",
 						"type": "Expression"
 					},
 					"activities": [
@@ -87,7 +87,7 @@
 							"typeProperties": {
 								"method": "GET",
 								"url": {
-									"value": "www.googleapis.com/youtube/v3/search?key=AIzaSyAdZX2MPkbNoJLcUTL0qMbSj2mTMJMqgdY\n   &channelId=@{item().channel_id}\n   &part=snippet\n   &order=date\n   &maxResults=50\n",
+									"value": "@concat(\n  'https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&id=',\n  item().channel_id,\n  '&key=AIzaSyAdZX2MPkbNoJLcUTL0qMbSj2mTMJMqgdY'\n)\n",
 									"type": "Expression"
 								}
 							}
@@ -139,7 +139,7 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"ChannelId": {
-											"value": "@activity('Fetch-Channel-data').output",
+											"value": "@item().channel_id",
 											"type": "Expression"
 										}
 									}
@@ -177,7 +177,7 @@
 							"typeProperties": {
 								"method": "GET",
 								"url": {
-									"value": "@www.googleapis.com/youtube/v3/search?channelId=activity('Yt-Channeldata-Store').output&type=video&part=snippet,id&key=AIzaSyDWZTMscDBpW33tzqYP21UmE6nxnwVk7Wg",
+									"value": "@www.googleapis.com/youtube/v3/search?channelId=@{item().channel_id}.output&type=video&part=snippet,id&key=AIzaSyDWZTMscDBpW33tzqYP21UmE6nxnwVk7Wg",
 									"type": "Expression"
 								}
 							}
@@ -229,7 +229,7 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"ChannelId": {
-											"value": "@activity('Fetch-All-Videos-data').output",
+											"value": "@item().channel_id",
 											"type": "Expression"
 										}
 									}

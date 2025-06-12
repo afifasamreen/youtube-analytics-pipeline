@@ -1,0 +1,24 @@
+{
+	"name": "ds_youtube_comments_rest",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_Http_yt",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"VideoId": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": {
+				"value": "commentThreads?part=snippet&videoId=@{dataset().VideoId}&key=AIzaSyDWZTMscDBpW33tzqYP21UmE6nxnwVk7Wg",
+				"type": "Expression"
+			}
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

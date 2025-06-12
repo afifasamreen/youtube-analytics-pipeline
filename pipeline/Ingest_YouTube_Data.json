@@ -1,0 +1,171 @@
+{
+	"name": "Ingest_YouTube_Data",
+	"properties": {
+		"activities": [
+			{
+				"name": "YT-Transformations",
+				"type": "DatabricksNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Users/afifa.samreen@anblicks.com/YT-Transformations",
+					"baseParameters": {
+						"ingest_date": {
+							"value": "@utcNow('yyyy-MM-dd')",
+							"type": "Expression"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "Databricks_YTProject_LS",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "LookupActivity",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SnowflakeV2Source",
+						"query": "select channel_id from YOUTUBE_DATABASE.YT_SCHEMA.YT_CHANNELS_TABLE where  fetch_enabled= TRUE;",
+						"exportSettings": {
+							"type": "SnowflakeExportCopyCommand"
+						}
+					},
+					"dataset": {
+						"referenceName": "Yt_Snowflake_table",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "ForEach-ChannelID",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "LookupActivity",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LookupActivity').output",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Fetch-Channel-data",
+							"type": "WebActivity",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"method": "GET",
+								"url": {
+									"value": "www.googleapis.com/youtube/v3/search?key=AIzaSyAdZX2MPkbNoJLcUTL0qMbSj2mTMJMqgdY\n   &channelId=@{item().channel_id}\n   &part=snippet\n   &order=date\n   &maxResults=50\n",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Yt-Channeldata-Store",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Fetch-Channel-data",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "RestSource",
+									"httpRequestTimeout": "00:01:40",
+									"requestInterval": "00.00:00:00.010",
+									"requestMethod": "GET",
+									"paginationRules": {
+										"supportRFC5988": "true"
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobStorageWriteSettings",
+										"copyBehavior": "FlattenHierarchy"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "Yt_Channels_rest",
+									"type": "DatasetReference",
+									"parameters": {
+										"ChannelId": {
+											"value": "@activity('Fetch-Channel-data').output",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "Yt_data",
+									"type": "DatasetReference",
+									"parameters": {
+										"SubFolder": "Channel-Stats"
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"VideoIdList": {
+				"type": "array"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-06-12T06:45:00Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

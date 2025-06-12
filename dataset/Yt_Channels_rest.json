@@ -1,0 +1,24 @@
+{
+	"name": "Yt_Channels_rest",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_Http_yt",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"ChannelId": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": {
+				"value": "@channels?part=statistics,snippet&id=dataset().ChannelId&key=AIzaSyDWZTMscDBpW33tzqYP21UmE6nxnwVk7Wg",
+				"type": "Expression"
+			}
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

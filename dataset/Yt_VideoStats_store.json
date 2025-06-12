@@ -1,0 +1,157 @@
+{
+	"name": "Yt_VideoStats_store",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_blob_ytrawdata",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": {
+					"value": "@{formatDateTime(utcNow(),'yyyy-MM-dd')}.json",
+					"type": "Expression"
+				},
+				"folderPath": "Video-Stats",
+				"container": "rawdata"
+			}
+		},
+		"schema": {
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string"
+				},
+				"etag": {
+					"type": "string"
+				},
+				"pageInfo": {
+					"type": "object",
+					"properties": {
+						"totalResults": {
+							"type": "integer"
+						},
+						"resultsPerPage": {
+							"type": "integer"
+						}
+					}
+				},
+				"items": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"kind": {
+								"type": "string"
+							},
+							"etag": {
+								"type": "string"
+							},
+							"id": {
+								"type": "string"
+							},
+							"snippet": {
+								"type": "object",
+								"properties": {
+									"title": {
+										"type": "string"
+									},
+									"description": {
+										"type": "string"
+									},
+									"customUrl": {
+										"type": "string"
+									},
+									"publishedAt": {
+										"type": "string"
+									},
+									"thumbnails": {
+										"type": "object",
+										"properties": {
+											"default": {
+												"type": "object",
+												"properties": {
+													"url": {
+														"type": "string"
+													},
+													"width": {
+														"type": "integer"
+													},
+													"height": {
+														"type": "integer"
+													}
+												}
+											},
+											"medium": {
+												"type": "object",
+												"properties": {
+													"url": {
+														"type": "string"
+													},
+													"width": {
+														"type": "integer"
+													},
+													"height": {
+														"type": "integer"
+													}
+												}
+											},
+											"high": {
+												"type": "object",
+												"properties": {
+													"url": {
+														"type": "string"
+													},
+													"width": {
+														"type": "integer"
+													},
+													"height": {
+														"type": "integer"
+													}
+												}
+											}
+										}
+									},
+									"localized": {
+										"type": "object",
+										"properties": {
+											"title": {
+												"type": "string"
+											},
+											"description": {
+												"type": "string"
+											}
+										}
+									},
+									"country": {
+										"type": "string"
+									}
+								}
+							},
+							"statistics": {
+								"type": "object",
+								"properties": {
+									"viewCount": {
+										"type": "string"
+									},
+									"subscriberCount": {
+										"type": "string"
+									},
+									"hiddenSubscriberCount": {
+										"type": "boolean"
+									},
+									"videoCount": {
+										"type": "string"
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

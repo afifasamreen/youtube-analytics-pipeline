@@ -1,0 +1,220 @@
+{
+	"name": "Yt_CommentsStats_store",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_blob_ytrawdata",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": {
+					"value": "@{formatDateTime(utcNow(),'yyyy-MM-dd')}.json",
+					"type": "Expression"
+				},
+				"folderPath": "Comments-Stats",
+				"container": "rawdata"
+			}
+		},
+		"schema": {
+			"type": "object",
+			"properties": {
+				"kind": {
+					"type": "string"
+				},
+				"etag": {
+					"type": "string"
+				},
+				"items": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"kind": {
+								"type": "string"
+							},
+							"etag": {
+								"type": "string"
+							},
+							"id": {
+								"type": "string"
+							},
+							"snippet": {
+								"type": "object",
+								"properties": {
+									"publishedAt": {
+										"type": "string"
+									},
+									"channelId": {
+										"type": "string"
+									},
+									"title": {
+										"type": "string"
+									},
+									"description": {
+										"type": "string"
+									},
+									"thumbnails": {
+										"type": "object",
+										"properties": {
+											"default": {
+												"type": "object",
+												"properties": {
+													"url": {
+														"type": "string"
+													},
+													"width": {
+														"type": "integer"
+													},
+													"height": {
+														"type": "integer"
+													}
+												}
+											},
+											"medium": {
+												"type": "object",
+												"properties": {
+													"url": {
+														"type": "string"
+													},
+													"width": {
+														"type": "integer"
+													},
+													"height": {
+														"type": "integer"
+													}
+												}
+											},
+											"high": {
+												"type": "object",
+												"properties": {
+													"url": {
+														"type": "string"
+													},
+													"width": {
+														"type": "integer"
+													},
+													"height": {
+														"type": "integer"
+													}
+												}
+											},
+											"standard": {
+												"type": "object",
+												"properties": {
+													"url": {
+														"type": "string"
+													},
+													"width": {
+														"type": "integer"
+													},
+													"height": {
+														"type": "integer"
+													}
+												}
+											},
+											"maxres": {
+												"type": "object",
+												"properties": {
+													"url": {
+														"type": "string"
+													},
+													"width": {
+														"type": "integer"
+													},
+													"height": {
+														"type": "integer"
+													}
+												}
+											}
+										}
+									},
+									"channelTitle": {
+										"type": "string"
+									},
+									"categoryId": {
+										"type": "string"
+									},
+									"liveBroadcastContent": {
+										"type": "string"
+									},
+									"localized": {
+										"type": "object",
+										"properties": {
+											"title": {
+												"type": "string"
+											},
+											"description": {
+												"type": "string"
+											}
+										}
+									},
+									"defaultAudioLanguage": {
+										"type": "string"
+									}
+								}
+							},
+							"contentDetails": {
+								"type": "object",
+								"properties": {
+									"duration": {
+										"type": "string"
+									},
+									"dimension": {
+										"type": "string"
+									},
+									"definition": {
+										"type": "string"
+									},
+									"caption": {
+										"type": "string"
+									},
+									"licensedContent": {
+										"type": "boolean"
+									},
+									"contentRating": {
+										"type": "object"
+									},
+									"projection": {
+										"type": "string"
+									}
+								}
+							},
+							"statistics": {
+								"type": "object",
+								"properties": {
+									"viewCount": {
+										"type": "string"
+									},
+									"likeCount": {
+										"type": "string"
+									},
+									"favoriteCount": {
+										"type": "string"
+									},
+									"commentCount": {
+										"type": "string"
+									}
+								}
+							}
+						}
+					}
+				},
+				"pageInfo": {
+					"type": "object",
+					"properties": {
+						"totalResults": {
+							"type": "integer"
+						},
+						"resultsPerPage": {
+							"type": "integer"
+						}
+					}
+				}
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

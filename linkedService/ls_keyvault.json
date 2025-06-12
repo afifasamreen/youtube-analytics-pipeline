@@ -1,0 +1,12 @@
+{
+	"name": "ls_keyvault",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"description": "linking service with key vault for the API key",
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://Yt-Vault-Key.vault.azure.net/"
+		}
+	}
+}

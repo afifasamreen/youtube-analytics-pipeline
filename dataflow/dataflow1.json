@@ -12,13 +12,53 @@
 					"name": "AllVideosSource"
 				}
 			],
-			"sinks": [],
-			"transformations": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "Yt_data",
+						"type": "DatasetReference"
+					},
+					"name": "YtVideoIdstore"
+				}
+			],
+			"transformations": [
+				{
+					"name": "flattenItems"
+				},
+				{
+					"name": "ExtractVideoId"
+				}
+			],
 			"scriptLines": [
-				"source(allowSchemaDrift: true,",
+				"source(output(",
+				"          etag as string,",
+				"          items as (etag as string, id as (kind as string, videoId as string), kind as string, snippet as (channelId as string, channelTitle as string, description as string, liveBroadcastContent as string, publishTime as timestamp, publishedAt as timestamp, thumbnails as (default as (height as short, url as string, width as short), high as (height as short, url as string, width as short), medium as (height as short, url as string, width as short)), title as string))[],",
+				"          kind as string,",
+				"          nextPageToken as string,",
+				"          pageInfo as (resultsPerPage as short, totalResults as short),",
+				"          regionCode as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false,",
-				"     documentForm: 'documentPerLine') ~> AllVideosSource"
+				"     documentForm: 'documentPerLine') ~> AllVideosSource",
+				"AllVideosSource foldDown(unroll(items),",
+				"     mapColumn(",
+				"          etag,",
+				"          items = items,",
+				"          kind,",
+				"          nextPageToken,",
+				"          pageInfo,",
+				"          regionCode",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> flattenItems",
+				"flattenItems derive(video_id = items.id.videoId,",
+				"          title = items.snippet.title) ~> ExtractVideoId",
+				"ExtractVideoId sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> YtVideoIdstore"
 			]
 		}
 	}

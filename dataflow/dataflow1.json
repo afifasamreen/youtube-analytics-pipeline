@@ -18,7 +18,11 @@
 						"referenceName": "Yt_data",
 						"type": "DatasetReference"
 					},
-					"name": "YtVideoIdstore"
+					"name": "YtVideoIdsOnlyStore",
+					"rejectedDataLinkedService": {
+						"referenceName": "ls_blob_ytrawdata",
+						"type": "LinkedServiceReference"
+					}
 				}
 			],
 			"transformations": [
@@ -45,7 +49,7 @@
 				"AllVideosSource foldDown(unroll(items),",
 				"     mapColumn(",
 				"          etag,",
-				"          items = items,",
+				"          items,",
 				"          kind,",
 				"          nextPageToken,",
 				"          pageInfo,",
@@ -58,7 +62,7 @@
 				"ExtractVideoId sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> YtVideoIdstore"
+				"     skipDuplicateMapOutputs: true) ~> YtVideoIdsOnlyStore"
 			]
 		}
 	}

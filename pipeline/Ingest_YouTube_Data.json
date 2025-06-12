@@ -293,8 +293,8 @@
 												"type": "Expression"
 											}
 										},
-										"YtVideoIdstore": {
-											"SubFolder": "Video-Stats",
+										"YtVideoIdsOnlyStore": {
+											"SubFolder": "Video-Ids-Only",
 											"ChannelName": {
 												"value": "@item().channel_name",
 												"type": "Expression"
@@ -307,6 +307,51 @@
 									"computeType": "General"
 								},
 								"traceLevel": "Fine"
+							}
+						},
+						{
+							"name": "LookupIntoeachVideoID",
+							"type": "Lookup",
+							"dependsOn": [
+								{
+									"activity": "DataFlow-VideoId",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"storeSettings": {
+										"type": "AzureBlobStorageReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"dataset": {
+									"referenceName": "Yt_data",
+									"type": "DatasetReference",
+									"parameters": {
+										"SubFolder": "Videos-All",
+										"ChannelName": {
+											"value": "@item().channel_name",
+											"type": "Expression"
+										}
+									}
+								},
+								"firstRowOnly": false
 							}
 						}
 					]

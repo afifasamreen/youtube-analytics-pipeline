@@ -6,9 +6,6 @@
 			"type": "LinkedServiceReference"
 		},
 		"parameters": {
-			"ChannelId": {
-				"type": "string"
-			},
 			"RelativeURL": {
 				"type": "string"
 			}

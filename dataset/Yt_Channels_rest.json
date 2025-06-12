@@ -8,13 +8,16 @@
 		"parameters": {
 			"ChannelId": {
 				"type": "string"
+			},
+			"RelativeURL": {
+				"type": "string"
 			}
 		},
 		"annotations": [],
 		"type": "RestResource",
 		"typeProperties": {
 			"relativeUrl": {
-				"value": "@channels?part=statistics,snippet&id=dataset().ChannelId&key=AIzaSyDWZTMscDBpW33tzqYP21UmE6nxnwVk7Wg",
+				"value": "@dataset().RelativeURL",
 				"type": "Expression"
 			}
 		},

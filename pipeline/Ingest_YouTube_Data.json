@@ -43,7 +43,7 @@
 				"typeProperties": {
 					"source": {
 						"type": "SnowflakeV2Source",
-						"query": "select channel_id from YOUTUBE_DATABASE.YT_SCHEMA.YT_CHANNELS_TABLE where  fetch_enabled= TRUE;",
+						"query": "select channel_id , channel_name from YOUTUBE_DATABASE.YT_SCHEMA.YT_CHANNELS_TABLE where  fetch_enabled= TRUE;",
 						"exportSettings": {
 							"type": "SnowflakeExportCopyCommand"
 						}
@@ -51,7 +51,8 @@
 					"dataset": {
 						"referenceName": "Yt_Snowflake_table",
 						"type": "DatasetReference"
-					}
+					},
+					"firstRowOnly": false
 				}
 			},
 			{
@@ -68,7 +69,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@activity('LookupActivity').output.item",
+						"value": "@activity('LookupActivity').output.value\n",
 						"type": "Expression"
 					},
 					"activities": [
@@ -87,7 +88,7 @@
 							"typeProperties": {
 								"method": "GET",
 								"url": {
-									"value": "@concat(\n  'https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&id=',\n  item().channel_id,\n  '&key=AIzaSyAdZX2MPkbNoJLcUTL0qMbSj2mTMJMqgdY'\n)\n",
+									"value": "@concat(\n  'https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&id=',\n  item().channel_id,\n  '&key=AIzaSyAdZX2MPkbNoJLcUTL0qMbSj2mTMJMqgdY&maxResults=50'\n)",
 									"type": "Expression"
 								}
 							}
@@ -139,7 +140,11 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"ChannelId": {
-											"value": "@item().channel_id",
+											"value": "@activity('Fetch-Channel-data').output",
+											"type": "Expression"
+										},
+										"RelativeURL": {
+											"value": "@concat(\n  'channels?part=snippet,statistics&id=',\n  item().channel_id,\n  '&key=AIzaSyAdZX2MPkbNoJLcUTL0qMbSj2mTMJMqgdY&maxResults=50'\n)",
 											"type": "Expression"
 										}
 									}
@@ -150,7 +155,11 @@
 									"referenceName": "Yt_data",
 									"type": "DatasetReference",
 									"parameters": {
-										"SubFolder": "Channel-Stats"
+										"SubFolder": "Channel-Stats",
+										"ChannelName": {
+											"value": "@item().channel_name",
+											"type": "Expression"
+										}
 									}
 								}
 							]
@@ -177,7 +186,7 @@
 							"typeProperties": {
 								"method": "GET",
 								"url": {
-									"value": "@www.googleapis.com/youtube/v3/search?channelId=@{item().channel_id}.output&type=video&part=snippet,id&key=AIzaSyDWZTMscDBpW33tzqYP21UmE6nxnwVk7Wg",
+									"value": "@concat('https://www.googleapis.com/youtube/v3/search?channelId=', item().channel_id, '&type=video&part=snippet&key=AIzaSyAdZX2MPkbNoJLcUTL0qMbSj2mTMJMqgdY&maxResults=50')",
 									"type": "Expression"
 								}
 							}
@@ -229,7 +238,11 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"ChannelId": {
-											"value": "@item().channel_id",
+											"value": "@activity('Fetch-All-Videos-data').output",
+											"type": "Expression"
+										},
+										"RelativeURL": {
+											"value": "@concat('search?channelId=', item().channel_id, '&type=video&part=snippet&key=AIzaSyAdZX2MPkbNoJLcUTL0qMbSj2mTMJMqgdY&maxResults=50')",
 											"type": "Expression"
 										}
 									}
@@ -240,10 +253,54 @@
 									"referenceName": "Yt_data",
 									"type": "DatasetReference",
 									"parameters": {
-										"SubFolder": "Videos-All"
+										"SubFolder": "Videos-All",
+										"ChannelName": {
+											"value": "@item().channel_name",
+											"type": "Expression"
+										}
 									}
 								}
 							]
+						},
+						{
+							"name": "DataFlow-VideoId",
+							"type": "ExecuteDataFlow",
+							"dependsOn": [
+								{
+									"activity": "Yt-All-Videos-data-Store",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataflow": {
+									"referenceName": "dataflow1",
+									"type": "DataFlowReference",
+									"datasetParameters": {
+										"AllVideosSource": {
+											"SubFolder": "Videos-All",
+											"ChannelName": {
+												"value": "@item().channel_name",
+												"type": "Expression"
+											}
+										}
+									}
+								},
+								"compute": {
+									"coreCount": 8,
+									"computeType": "General"
+								},
+								"traceLevel": "Fine"
+							}
 						}
 					]
 				}

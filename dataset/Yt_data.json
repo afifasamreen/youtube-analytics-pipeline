@@ -8,6 +8,9 @@
 		"parameters": {
 			"SubFolder": {
 				"type": "string"
+			},
+			"ChannelName": {
+				"type": "string"
 			}
 		},
 		"annotations": [],
@@ -16,7 +19,7 @@
 			"location": {
 				"type": "AzureBlobStorageLocation",
 				"fileName": {
-					"value": "@concat(formatDateTime(utcNow(), 'yyyy-MM-dd'))",
+					"value": "@concat(dataset().ChannelName,'-',formatDateTime(utcNow(), 'yyyy-MM-dd-'),'.json')",
 					"type": "Expression"
 				},
 				"folderPath": {

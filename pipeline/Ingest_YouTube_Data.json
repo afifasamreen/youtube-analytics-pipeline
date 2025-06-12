@@ -154,6 +154,96 @@
 									}
 								}
 							]
+						},
+						{
+							"name": "Fetch-All-Videos-data",
+							"type": "WebActivity",
+							"dependsOn": [
+								{
+									"activity": "Yt-Channeldata-Store",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"method": "GET",
+								"url": {
+									"value": "@www.googleapis.com/youtube/v3/search?channelId=activity('Yt-Channeldata-Store').output&type=video&part=snippet,id&key=AIzaSyDWZTMscDBpW33tzqYP21UmE6nxnwVk7Wg",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Yt-All-Videos-data-Store",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Fetch-All-Videos-data",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "RestSource",
+									"httpRequestTimeout": "00:01:40",
+									"requestInterval": "00.00:00:00.010",
+									"requestMethod": "GET",
+									"paginationRules": {
+										"supportRFC5988": "true"
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobStorageWriteSettings",
+										"copyBehavior": "FlattenHierarchy"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "Yt_Channels_rest",
+									"type": "DatasetReference",
+									"parameters": {
+										"ChannelId": {
+											"value": "@activity('Fetch-All-Videos-data').output",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "Yt_data",
+									"type": "DatasetReference",
+									"parameters": {
+										"SubFolder": "Videos-All"
+									}
+								}
+							]
 						}
 					]
 				}

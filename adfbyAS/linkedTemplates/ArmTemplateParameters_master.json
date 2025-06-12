@@ -1,0 +1,42 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "adfbyAS"
+		},
+		"Databricks_YTProject_LS_accessToken": {
+			"value": ""
+		},
+		"ls_Snowflake_password": {
+			"value": ""
+		},
+		"ls_blob_ytrawdata_connectionString": {
+			"value": ""
+		},
+		"Databricks_YTProject_LS_properties_typeProperties_existingClusterId": {
+			"value": "0609-070659-64vpyt4h"
+		},
+		"ls_Http_yt_properties_typeProperties_url": {
+			"value": "https://www.googleapis.com/youtube/v3"
+		},
+		"ls_Snowflake_properties_typeProperties_database": {
+			"value": "YOUTUBE_DATABASE"
+		},
+		"ls_Snowflake_properties_typeProperties_role": {
+			"value": "ACCOUNTADMIN"
+		},
+		"ls_Snowflake_properties_typeProperties_host": {
+			"value": "EGDVPQX-GI54519.snowflakecomputing.com"
+		},
+		"ls_keyvault_properties_typeProperties_baseUrl": {
+			"value": "https://Yt-Vault-Key.vault.azure.net/"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}

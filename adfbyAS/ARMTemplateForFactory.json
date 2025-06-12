@@ -1,0 +1,1550 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "adfbyAS"
+		},
+		"Databricks_YTProject_LS_accessToken": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accessToken' of 'Databricks_YTProject_LS'"
+		},
+		"ls_Snowflake_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'ls_Snowflake'"
+		},
+		"ls_blob_ytrawdata_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'ls_blob_ytrawdata'"
+		},
+		"Databricks_YTProject_LS_properties_typeProperties_existingClusterId": {
+			"type": "string",
+			"defaultValue": "0609-070659-64vpyt4h"
+		},
+		"ls_Http_yt_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://www.googleapis.com/youtube/v3"
+		},
+		"ls_Snowflake_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "YOUTUBE_DATABASE"
+		},
+		"ls_Snowflake_properties_typeProperties_role": {
+			"type": "string",
+			"defaultValue": "ACCOUNTADMIN"
+		},
+		"ls_Snowflake_properties_typeProperties_host": {
+			"type": "string",
+			"defaultValue": "EGDVPQX-GI54519.snowflakecomputing.com"
+		},
+		"ls_keyvault_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://Yt-Vault-Key.vault.azure.net/"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/Ingest_YouTube_Data')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "YT-Transformations",
+						"type": "DatabricksNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/afifa.samreen@anblicks.com/YT-Transformations",
+							"baseParameters": {
+								"ingest_date": {
+									"value": "@utcNow('yyyy-MM-dd')",
+									"type": "Expression"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "Databricks_YTProject_LS",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "LookupActivity",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SnowflakeV2Source",
+								"query": "select channel_id , channel_name from YOUTUBE_DATABASE.YT_SCHEMA.YT_CHANNELS_TABLE where  fetch_enabled= TRUE;",
+								"exportSettings": {
+									"type": "SnowflakeExportCopyCommand"
+								}
+							},
+							"dataset": {
+								"referenceName": "Yt_Snowflake_table",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "ForEach-ChannelID",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "LookupActivity",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('LookupActivity').output.value\n",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Fetch-Channel-data",
+									"type": "WebActivity",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"method": "GET",
+										"headers": {},
+										"url": {
+											"value": "@concat(\n  'https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&id=',\n  item().channel_id,\n  '&key=AIzaSyAdZX2MPkbNoJLcUTL0qMbSj2mTMJMqgdY&maxResults=50'\n)",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "Yt-Channeldata-Store",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Fetch-Channel-data",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "RestSource",
+											"httpRequestTimeout": "00:01:40",
+											"requestInterval": "00.00:00:00.010",
+											"requestMethod": "GET",
+											"paginationRules": {
+												"supportRFC5988": "true"
+											}
+										},
+										"sink": {
+											"type": "JsonSink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings",
+												"copyBehavior": "FlattenHierarchy"
+											},
+											"formatSettings": {
+												"type": "JsonWriteSettings"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "Yt_Channels_rest",
+											"type": "DatasetReference",
+											"parameters": {
+												"ChannelId": {
+													"value": "@activity('Fetch-Channel-data').output",
+													"type": "Expression"
+												},
+												"RelativeURL": {
+													"value": "@concat(\n  'channels?part=snippet,statistics&id=',\n  item().channel_id,\n  '&key=AIzaSyAdZX2MPkbNoJLcUTL0qMbSj2mTMJMqgdY&maxResults=50'\n)",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "Yt_data",
+											"type": "DatasetReference",
+											"parameters": {
+												"SubFolder": "Channel-Stats",
+												"ChannelName": {
+													"value": "@item().channel_name",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								},
+								{
+									"name": "Fetch-All-Videos-data",
+									"type": "WebActivity",
+									"dependsOn": [
+										{
+											"activity": "Yt-Channeldata-Store",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"method": "GET",
+										"headers": {},
+										"url": {
+											"value": "@concat('https://www.googleapis.com/youtube/v3/search?channelId=', item().channel_id, '&type=video&part=snippet&key=AIzaSyAdZX2MPkbNoJLcUTL0qMbSj2mTMJMqgdY&maxResults=50')",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "Yt-All-Videos-data-Store",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Fetch-All-Videos-data",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "RestSource",
+											"httpRequestTimeout": "00:01:40",
+											"requestInterval": "00.00:00:00.010",
+											"requestMethod": "GET",
+											"paginationRules": {
+												"supportRFC5988": "true"
+											}
+										},
+										"sink": {
+											"type": "JsonSink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings",
+												"copyBehavior": "FlattenHierarchy"
+											},
+											"formatSettings": {
+												"type": "JsonWriteSettings"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "Yt_Channels_rest",
+											"type": "DatasetReference",
+											"parameters": {
+												"ChannelId": {
+													"value": "@activity('Fetch-All-Videos-data').output",
+													"type": "Expression"
+												},
+												"RelativeURL": {
+													"value": "@concat('search?channelId=', item().channel_id, '&type=video&part=snippet&key=AIzaSyAdZX2MPkbNoJLcUTL0qMbSj2mTMJMqgdY&maxResults=50')",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "Yt_data",
+											"type": "DatasetReference",
+											"parameters": {
+												"SubFolder": "Videos-All",
+												"ChannelName": {
+													"value": "@item().channel_name",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								},
+								{
+									"name": "DataFlow-VideoId",
+									"type": "ExecuteDataFlow",
+									"dependsOn": [
+										{
+											"activity": "Yt-All-Videos-data-Store",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataflow": {
+											"referenceName": "dataflow1",
+											"type": "DataFlowReference",
+											"parameters": {},
+											"datasetParameters": {
+												"AllVideosSource": {
+													"SubFolder": "Videos-All",
+													"ChannelName": {
+														"value": "@item().channel_name",
+														"type": "Expression"
+													}
+												},
+												"YtVideoIdstore": {
+													"SubFolder": "Video-Stats",
+													"ChannelName": {
+														"value": "@item().channel_name",
+														"type": "Expression"
+													}
+												}
+											}
+										},
+										"staging": {},
+										"compute": {
+											"coreCount": 8,
+											"computeType": "General"
+										},
+										"traceLevel": "Fine"
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"VideoIdList": {
+						"type": "array"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-06-12T06:45:00Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/Databricks_YTProject_LS')]",
+				"[concat(variables('factoryId'), '/datasets/Yt_Snowflake_table')]",
+				"[concat(variables('factoryId'), '/datasets/Yt_Channels_rest')]",
+				"[concat(variables('factoryId'), '/datasets/Yt_data')]",
+				"[concat(variables('factoryId'), '/dataflows/dataflow1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Yt-ChannelStats",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "GET",
+							"headers": {},
+							"url": "https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&id=UCXQnpama_0lAzj_4MAdZ5vw&key=AIzaSyDWZTMscDBpW33tzqYP21UmE6nxnwVk7Wg"
+						}
+					},
+					{
+						"name": "Yt-ChannelStats-Store",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Yt-ChannelStats",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "RestSource",
+								"httpRequestTimeout": "00:01:40",
+								"requestInterval": "00.00:00:00.010",
+								"requestMethod": "GET",
+								"paginationRules": {
+									"supportRFC5988": "true"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings",
+									"copyBehavior": "FlattenHierarchy"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "ls_youtube_channel_rest",
+								"type": "DatasetReference",
+								"parameters": {
+									"ChannelId": "UCXQnpama_0lAzj_4MAdZ5vw"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "Yt_ChannelStats_store",
+								"type": "DatasetReference",
+								"parameters": {
+									"SubFolder": "Channel-Stats"
+								}
+							}
+						]
+					},
+					{
+						"name": "Yt-VideoStats",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "GET",
+							"headers": {},
+							"url": "https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=tHv-Cdb7yEw&key=AIzaSyDWZTMscDBpW33tzqYP21UmE6nxnwVk7Wg"
+						}
+					},
+					{
+						"name": "Yt-VideoStats-Store",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Yt-VideoStats",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "RestSource",
+								"httpRequestTimeout": "00:01:40",
+								"requestInterval": "00.00:00:00.010",
+								"requestMethod": "GET",
+								"paginationRules": {
+									"supportRFC5988": "true"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings",
+									"copyBehavior": "FlattenHierarchy"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_youtube_Video_rest",
+								"type": "DatasetReference",
+								"parameters": {
+									"VideoId": "tHv-Cdb7yEw"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "Yt_VideoStats_store",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "Yt-CommentsStats",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "GET",
+							"headers": {},
+							"url": "https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=tHv-Cdb7yEw&key=AIzaSyDWZTMscDBpW33tzqYP21UmE6nxnwVk7Wg"
+						}
+					},
+					{
+						"name": "Yt-CommentsStats-Store",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Yt-CommentsStats",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "RestSource",
+								"httpRequestTimeout": "00:01:40",
+								"requestInterval": "00.00:00:00.010",
+								"requestMethod": "GET",
+								"paginationRules": {
+									"supportRFC5988": "true"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings",
+									"copyBehavior": "FlattenHierarchy"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_youtube_comments_rest",
+								"type": "DatasetReference",
+								"parameters": {
+									"VideoId": "tHv-Cdb7yEw"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "Yt_CommentsStats_store",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-06-12T06:41:51Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ls_youtube_channel_rest')]",
+				"[concat(variables('factoryId'), '/datasets/Yt_ChannelStats_store')]",
+				"[concat(variables('factoryId'), '/datasets/ds_youtube_Video_rest')]",
+				"[concat(variables('factoryId'), '/datasets/Yt_VideoStats_store')]",
+				"[concat(variables('factoryId'), '/datasets/ds_youtube_comments_rest')]",
+				"[concat(variables('factoryId'), '/datasets/Yt_CommentsStats_store')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Yt_ChannelStats_store')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_blob_ytrawdata",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"SubFolder": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@{formatDateTime(utcNow(),'yyyy-MM-dd')}.json",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().SubFolder",
+							"type": "Expression"
+						},
+						"container": "rawdata"
+					}
+				},
+				"schema": {
+					"type": "object",
+					"properties": {
+						"kind": {
+							"type": "string"
+						},
+						"etag": {
+							"type": "string"
+						},
+						"pageInfo": {
+							"type": "object",
+							"properties": {
+								"totalResults": {
+									"type": "integer"
+								},
+								"resultsPerPage": {
+									"type": "integer"
+								}
+							}
+						},
+						"items": {
+							"type": "array",
+							"items": {
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string"
+									},
+									"etag": {
+										"type": "string"
+									},
+									"id": {
+										"type": "string"
+									},
+									"snippet": {
+										"type": "object",
+										"properties": {
+											"channelId": {
+												"type": "string"
+											},
+											"videoId": {
+												"type": "string"
+											},
+											"topLevelComment": {
+												"type": "object",
+												"properties": {
+													"kind": {
+														"type": "string"
+													},
+													"etag": {
+														"type": "string"
+													},
+													"id": {
+														"type": "string"
+													},
+													"snippet": {
+														"type": "object",
+														"properties": {
+															"channelId": {
+																"type": "string"
+															},
+															"videoId": {
+																"type": "string"
+															},
+															"textDisplay": {
+																"type": "string"
+															},
+															"textOriginal": {
+																"type": "string"
+															},
+															"authorDisplayName": {
+																"type": "string"
+															},
+															"authorProfileImageUrl": {
+																"type": "string"
+															},
+															"authorChannelUrl": {
+																"type": "string"
+															},
+															"authorChannelId": {
+																"type": "object",
+																"properties": {
+																	"value": {
+																		"type": "string"
+																	}
+																}
+															},
+															"canRate": {
+																"type": "boolean"
+															},
+															"viewerRating": {
+																"type": "string"
+															},
+															"likeCount": {
+																"type": "integer"
+															},
+															"publishedAt": {
+																"type": "string"
+															},
+															"updatedAt": {
+																"type": "string"
+															}
+														}
+													}
+												}
+											},
+											"canReply": {
+												"type": "boolean"
+											},
+											"totalReplyCount": {
+												"type": "integer"
+											},
+											"isPublic": {
+												"type": "boolean"
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_blob_ytrawdata')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Yt_Channels_rest')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_Http_yt",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"ChannelId": {
+						"type": "string"
+					},
+					"RelativeURL": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {
+					"relativeUrl": {
+						"value": "@dataset().RelativeURL",
+						"type": "Expression"
+					}
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_Http_yt')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Yt_CommentsStats_store')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_blob_ytrawdata",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@{formatDateTime(utcNow(),'yyyy-MM-dd')}.json",
+							"type": "Expression"
+						},
+						"folderPath": "Comments-Stats",
+						"container": "rawdata"
+					}
+				},
+				"schema": {
+					"type": "object",
+					"properties": {
+						"kind": {
+							"type": "string"
+						},
+						"etag": {
+							"type": "string"
+						},
+						"items": {
+							"type": "array",
+							"items": {
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string"
+									},
+									"etag": {
+										"type": "string"
+									},
+									"id": {
+										"type": "string"
+									},
+									"snippet": {
+										"type": "object",
+										"properties": {
+											"publishedAt": {
+												"type": "string"
+											},
+											"channelId": {
+												"type": "string"
+											},
+											"title": {
+												"type": "string"
+											},
+											"description": {
+												"type": "string"
+											},
+											"thumbnails": {
+												"type": "object",
+												"properties": {
+													"default": {
+														"type": "object",
+														"properties": {
+															"url": {
+																"type": "string"
+															},
+															"width": {
+																"type": "integer"
+															},
+															"height": {
+																"type": "integer"
+															}
+														}
+													},
+													"medium": {
+														"type": "object",
+														"properties": {
+															"url": {
+																"type": "string"
+															},
+															"width": {
+																"type": "integer"
+															},
+															"height": {
+																"type": "integer"
+															}
+														}
+													},
+													"high": {
+														"type": "object",
+														"properties": {
+															"url": {
+																"type": "string"
+															},
+															"width": {
+																"type": "integer"
+															},
+															"height": {
+																"type": "integer"
+															}
+														}
+													},
+													"standard": {
+														"type": "object",
+														"properties": {
+															"url": {
+																"type": "string"
+															},
+															"width": {
+																"type": "integer"
+															},
+															"height": {
+																"type": "integer"
+															}
+														}
+													},
+													"maxres": {
+														"type": "object",
+														"properties": {
+															"url": {
+																"type": "string"
+															},
+															"width": {
+																"type": "integer"
+															},
+															"height": {
+																"type": "integer"
+															}
+														}
+													}
+												}
+											},
+											"channelTitle": {
+												"type": "string"
+											},
+											"categoryId": {
+												"type": "string"
+											},
+											"liveBroadcastContent": {
+												"type": "string"
+											},
+											"localized": {
+												"type": "object",
+												"properties": {
+													"title": {
+														"type": "string"
+													},
+													"description": {
+														"type": "string"
+													}
+												}
+											},
+											"defaultAudioLanguage": {
+												"type": "string"
+											}
+										}
+									},
+									"contentDetails": {
+										"type": "object",
+										"properties": {
+											"duration": {
+												"type": "string"
+											},
+											"dimension": {
+												"type": "string"
+											},
+											"definition": {
+												"type": "string"
+											},
+											"caption": {
+												"type": "string"
+											},
+											"licensedContent": {
+												"type": "boolean"
+											},
+											"contentRating": {
+												"type": "object"
+											},
+											"projection": {
+												"type": "string"
+											}
+										}
+									},
+									"statistics": {
+										"type": "object",
+										"properties": {
+											"viewCount": {
+												"type": "string"
+											},
+											"likeCount": {
+												"type": "string"
+											},
+											"favoriteCount": {
+												"type": "string"
+											},
+											"commentCount": {
+												"type": "string"
+											}
+										}
+									}
+								}
+							}
+						},
+						"pageInfo": {
+							"type": "object",
+							"properties": {
+								"totalResults": {
+									"type": "integer"
+								},
+								"resultsPerPage": {
+									"type": "integer"
+								}
+							}
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_blob_ytrawdata')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Yt_Snowflake_table')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_Snowflake",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SnowflakeV2Table",
+				"schema": [
+					{
+						"name": "CHANNEL_ID",
+						"type": "VARCHAR"
+					},
+					{
+						"name": "CHANNEL_NAME",
+						"type": "VARCHAR"
+					},
+					{
+						"name": "FETCH_ENABLED",
+						"type": "BOOLEAN"
+					}
+				],
+				"typeProperties": {
+					"schema": "YT_SCHEMA",
+					"table": "YT_CHANNELS_TABLE"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_Snowflake')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Yt_VideoStats_store')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_blob_ytrawdata",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@{formatDateTime(utcNow(),'yyyy-MM-dd')}.json",
+							"type": "Expression"
+						},
+						"folderPath": "Video-Stats",
+						"container": "rawdata"
+					}
+				},
+				"schema": {
+					"type": "object",
+					"properties": {
+						"kind": {
+							"type": "string"
+						},
+						"etag": {
+							"type": "string"
+						},
+						"pageInfo": {
+							"type": "object",
+							"properties": {
+								"totalResults": {
+									"type": "integer"
+								},
+								"resultsPerPage": {
+									"type": "integer"
+								}
+							}
+						},
+						"items": {
+							"type": "array",
+							"items": {
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string"
+									},
+									"etag": {
+										"type": "string"
+									},
+									"id": {
+										"type": "string"
+									},
+									"snippet": {
+										"type": "object",
+										"properties": {
+											"title": {
+												"type": "string"
+											},
+											"description": {
+												"type": "string"
+											},
+											"customUrl": {
+												"type": "string"
+											},
+											"publishedAt": {
+												"type": "string"
+											},
+											"thumbnails": {
+												"type": "object",
+												"properties": {
+													"default": {
+														"type": "object",
+														"properties": {
+															"url": {
+																"type": "string"
+															},
+															"width": {
+																"type": "integer"
+															},
+															"height": {
+																"type": "integer"
+															}
+														}
+													},
+													"medium": {
+														"type": "object",
+														"properties": {
+															"url": {
+																"type": "string"
+															},
+															"width": {
+																"type": "integer"
+															},
+															"height": {
+																"type": "integer"
+															}
+														}
+													},
+													"high": {
+														"type": "object",
+														"properties": {
+															"url": {
+																"type": "string"
+															},
+															"width": {
+																"type": "integer"
+															},
+															"height": {
+																"type": "integer"
+															}
+														}
+													}
+												}
+											},
+											"localized": {
+												"type": "object",
+												"properties": {
+													"title": {
+														"type": "string"
+													},
+													"description": {
+														"type": "string"
+													}
+												}
+											},
+											"country": {
+												"type": "string"
+											}
+										}
+									},
+									"statistics": {
+										"type": "object",
+										"properties": {
+											"viewCount": {
+												"type": "string"
+											},
+											"subscriberCount": {
+												"type": "string"
+											},
+											"hiddenSubscriberCount": {
+												"type": "boolean"
+											},
+											"videoCount": {
+												"type": "string"
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_blob_ytrawdata')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Yt_data')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_blob_ytrawdata",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"SubFolder": {
+						"type": "string"
+					},
+					"ChannelName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@concat(dataset().ChannelName,'-',formatDateTime(utcNow(), 'yyyy-MM-dd-'),'.json')",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().SubFolder",
+							"type": "Expression"
+						},
+						"container": "rawdata"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_blob_ytrawdata')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_youtube_Video_rest')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_Http_yt",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"VideoId": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {
+					"relativeUrl": {
+						"value": "videos?part=snippet,statistics,contentDetails&id=@{dataset().VideoId}&key=AIzaSyDWZTMscDBpW33tzqYP21UmE6nxnwVk7Wg",
+						"type": "Expression"
+					}
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_Http_yt')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_youtube_channel_rest')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_Http_yt",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {
+					"relativeUrl": "youtube/v3/commentThreads?part=snippet&videoId=tHv-Cdb7yEw&key=AIzaSyDWZTMscDBpW33tzqYP21UmE6nxnwVk7Wg"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_Http_yt')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_youtube_comments_rest')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_Http_yt",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"VideoId": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {
+					"relativeUrl": {
+						"value": "commentThreads?part=snippet&videoId=@{dataset().VideoId}&key=AIzaSyDWZTMscDBpW33tzqYP21UmE6nxnwVk7Wg",
+						"type": "Expression"
+					}
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_Http_yt')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_youtube_channel_rest')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_Http_yt",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"ChannelId": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {
+					"relativeUrl": {
+						"value": "channels?part=statistics,snippet&id= @{dataset().ChannelId}&key=AIzaSyDWZTMscDBpW33tzqYP21UmE6nxnwVk7Wg",
+						"type": "Expression"
+					}
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_Http_yt')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Databricks_YTProject_LS')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricks",
+				"typeProperties": {
+					"domain": "https://adb-2871192041874567.7.azuredatabricks.net",
+					"accessToken": {
+						"type": "SecureString",
+						"value": "[parameters('Databricks_YTProject_LS_accessToken')]"
+					},
+					"existingClusterId": "[parameters('Databricks_YTProject_LS_properties_typeProperties_existingClusterId')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_Http_yt')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "RestService",
+				"typeProperties": {
+					"url": "[parameters('ls_Http_yt_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_Snowflake')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "SnowflakeV2",
+				"typeProperties": {
+					"authenticationType": "Basic",
+					"accountIdentifier": "EGDVPQX-GI54519",
+					"user": "afifasamreen",
+					"database": "[parameters('ls_Snowflake_properties_typeProperties_database')]",
+					"warehouse": "COMPUTE_WH",
+					"role": "[parameters('ls_Snowflake_properties_typeProperties_role')]",
+					"host": "[parameters('ls_Snowflake_properties_typeProperties_host')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('ls_Snowflake_password')]"
+					}
+				},
+				"version": "1.1"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_blob_ytrawdata')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "linking blob storage for the YouTube rawdata",
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('ls_blob_ytrawdata_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_keyvault')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "linking service with key vault for the API key",
+				"annotations": [],
+				"type": "AzureKeyVault",
+				"typeProperties": {
+					"baseUrl": "[parameters('ls_keyvault_properties_typeProperties_baseUrl')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dataflow1')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "Yt_data",
+								"type": "DatasetReference"
+							},
+							"name": "AllVideosSource"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "Yt_data",
+								"type": "DatasetReference"
+							},
+							"name": "YtVideoIdstore"
+						}
+					],
+					"transformations": [
+						{
+							"name": "flattenItems"
+						},
+						{
+							"name": "ExtractVideoId"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          etag as string,",
+						"          items as (etag as string, id as (kind as string, videoId as string), kind as string, snippet as (channelId as string, channelTitle as string, description as string, liveBroadcastContent as string, publishTime as timestamp, publishedAt as timestamp, thumbnails as (default as (height as short, url as string, width as short), high as (height as short, url as string, width as short), medium as (height as short, url as string, width as short)), title as string))[],",
+						"          kind as string,",
+						"          nextPageToken as string,",
+						"          pageInfo as (resultsPerPage as short, totalResults as short),",
+						"          regionCode as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     documentForm: 'documentPerLine') ~> AllVideosSource",
+						"AllVideosSource foldDown(unroll(items),",
+						"     mapColumn(",
+						"          etag,",
+						"          items,",
+						"          kind,",
+						"          nextPageToken,",
+						"          pageInfo,",
+						"          regionCode",
+						"     ),",
+						"     skipDuplicateMapInputs: false,",
+						"     skipDuplicateMapOutputs: false) ~> flattenItems",
+						"flattenItems derive(video_id = items.id.videoId,",
+						"          title = items.snippet.title) ~> ExtractVideoId",
+						"ExtractVideoId sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> YtVideoIdstore"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/Yt_data')]"
+			]
+		}
+	]
+}

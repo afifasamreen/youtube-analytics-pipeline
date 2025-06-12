@@ -1,0 +1,105 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "adfbyAS"
+		},
+		"Databricks_YTProject_LS_accessToken": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accessToken' of 'Databricks_YTProject_LS'"
+		},
+		"ls_Snowflake_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'ls_Snowflake'"
+		},
+		"ls_blob_ytrawdata_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'ls_blob_ytrawdata'"
+		},
+		"Databricks_YTProject_LS_properties_typeProperties_existingClusterId": {
+			"type": "string",
+			"defaultValue": "0609-070659-64vpyt4h"
+		},
+		"ls_Http_yt_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://www.googleapis.com/youtube/v3"
+		},
+		"ls_Snowflake_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "YOUTUBE_DATABASE"
+		},
+		"ls_Snowflake_properties_typeProperties_role": {
+			"type": "string",
+			"defaultValue": "ACCOUNTADMIN"
+		},
+		"ls_Snowflake_properties_typeProperties_host": {
+			"type": "string",
+			"defaultValue": "EGDVPQX-GI54519.snowflakecomputing.com"
+		},
+		"ls_keyvault_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://Yt-Vault-Key.vault.azure.net/"
+		},
+		"containerUri": {
+			"type": "string",
+			"metadata": "URI to storage account containing linked ARM templates"
+		},
+		"containerSasToken": {
+			"type": "string",
+			"metadata": "Sas token to storage account containing linked ARM templates"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "adfbyAS_ArmTemplate_0",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"Databricks_YTProject_LS_accessToken": {
+						"value": "[parameters('Databricks_YTProject_LS_accessToken')]"
+					},
+					"ls_Snowflake_password": {
+						"value": "[parameters('ls_Snowflake_password')]"
+					},
+					"ls_blob_ytrawdata_connectionString": {
+						"value": "[parameters('ls_blob_ytrawdata_connectionString')]"
+					},
+					"Databricks_YTProject_LS_properties_typeProperties_existingClusterId": {
+						"value": "[parameters('Databricks_YTProject_LS_properties_typeProperties_existingClusterId')]"
+					},
+					"ls_Http_yt_properties_typeProperties_url": {
+						"value": "[parameters('ls_Http_yt_properties_typeProperties_url')]"
+					},
+					"ls_Snowflake_properties_typeProperties_database": {
+						"value": "[parameters('ls_Snowflake_properties_typeProperties_database')]"
+					},
+					"ls_Snowflake_properties_typeProperties_role": {
+						"value": "[parameters('ls_Snowflake_properties_typeProperties_role')]"
+					},
+					"ls_Snowflake_properties_typeProperties_host": {
+						"value": "[parameters('ls_Snowflake_properties_typeProperties_host')]"
+					},
+					"ls_keyvault_properties_typeProperties_baseUrl": {
+						"value": "[parameters('ls_keyvault_properties_typeProperties_baseUrl')]"
+					}
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}

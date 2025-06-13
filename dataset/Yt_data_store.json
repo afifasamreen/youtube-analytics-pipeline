@@ -1,5 +1,5 @@
 {
-	"name": "Yt_data",
+	"name": "Yt_data_store",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "ls_blob_ytrawdata",
@@ -9,7 +9,7 @@
 			"SubFolder": {
 				"type": "string"
 			},
-			"ChannelName": {
+			"FileName": {
 				"type": "string"
 			}
 		},
@@ -19,7 +19,7 @@
 			"location": {
 				"type": "AzureBlobStorageLocation",
 				"fileName": {
-					"value": "@concat(dataset().ChannelName,'-',formatDateTime(utcNow(), 'yyyy-MM-dd-'),'.json')",
+					"value": "@concat(dataset().FileName,'_',formatDateTime(utcNow(), 'yyyy-MM-dd'),'.json')",
 					"type": "Expression"
 				},
 				"folderPath": {

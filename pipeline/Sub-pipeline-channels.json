@@ -1,0 +1,247 @@
+{
+	"name": "Sub-pipeline-channels",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup-channels",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SnowflakeV2Source",
+						"query": "select channel_id , channel_name from YOUTUBE_DATABASE.YT_SCHEMA.YT_CHANNELS_TABLE where  fetch_enabled= TRUE;",
+						"exportSettings": {
+							"type": "SnowflakeExportCopyCommand"
+						}
+					},
+					"dataset": {
+						"referenceName": "Yt_Snowflake_table",
+						"type": "DatasetReference",
+						"parameters": {
+							"TableName": "YT_CHANNELS_DATA"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach-ChannelID",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup-channels",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup-channels').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Fetch-Channel-data",
+							"type": "WebActivity",
+							"state": "Inactive",
+							"onInactiveMarkAs": "Succeeded",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"method": "GET",
+								"url": {
+									"value": "@concat(\n  'https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&id=',\n  item().channel_id,\n  '&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc&maxResults=50'\n)",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Yt-Channeldata-Store",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Fetch-Channel-data",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "RestSource",
+									"httpRequestTimeout": "00:01:40",
+									"requestInterval": "00.00:00:00.010",
+									"requestMethod": "GET",
+									"paginationRules": {
+										"supportRFC5988": "true"
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobStorageWriteSettings",
+										"copyBehavior": "FlattenHierarchy"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "Yt_URL_fetch",
+									"type": "DatasetReference",
+									"parameters": {
+										"RelativeURL": {
+											"value": "@concat(\n  'channels?part=snippet,statistics&id=',\n  item().channel_id,\n  '&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc&maxResults=50'\n)",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "Yt_data_store",
+									"type": "DatasetReference",
+									"parameters": {
+										"SubFolder": {
+											"value": "@item().channel_name",
+											"type": "Expression"
+										},
+										"FileName": {
+											"value": "@item().channel_name",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "Fetch-All-Videos-data",
+							"type": "WebActivity",
+							"state": "Inactive",
+							"onInactiveMarkAs": "Succeeded",
+							"dependsOn": [
+								{
+									"activity": "Yt-Channeldata-Store",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"method": "GET",
+								"url": {
+									"value": "@concat('https://www.googleapis.com/youtube/v3/search?channelId=', item().channel_id, '&type=video&part=snippet&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc&maxResults=50')",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Yt-All-Videos-data-Store",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Fetch-All-Videos-data",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "RestSource",
+									"httpRequestTimeout": "00:01:40",
+									"requestInterval": "00.00:00:00.010",
+									"requestMethod": "GET",
+									"paginationRules": {
+										"supportRFC5988": "true"
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobStorageWriteSettings",
+										"copyBehavior": "FlattenHierarchy"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "Yt_URL_fetch",
+									"type": "DatasetReference",
+									"parameters": {
+										"RelativeURL": {
+											"value": "@concat('search?channelId=', item().channel_id, '&type=video&part=snippet&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc&maxResults=50')",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "Yt_data_store",
+									"type": "DatasetReference",
+									"parameters": {
+										"SubFolder": {
+											"value": "@concat(item().channel_name,'/')",
+											"type": "Expression"
+										},
+										"FileName": "AllVideoIds"
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"annotations": []
+	}
+}

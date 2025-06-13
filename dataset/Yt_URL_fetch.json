@@ -1,5 +1,5 @@
 {
-	"name": "Yt_Channels_rest",
+	"name": "Yt_URL_fetch",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "ls_Http_yt",

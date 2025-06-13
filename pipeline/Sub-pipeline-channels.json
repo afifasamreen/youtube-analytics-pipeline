@@ -143,7 +143,7 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"SubFolder": {
-											"value": "@concat(item().channelTitle,'/',item().id.videoId)",
+											"value": "@concat(item().snippet.channelTitle,'/',item().id.videoId)",
 											"type": "Expression"
 										},
 										"FileName": {
@@ -242,11 +242,11 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"SubFolder": {
-											"value": "@concat(item().channelTitle,'/',item().id.videoId)",
+											"value": "@concat(item().snippet.channelTitle,'/',item().id.videoId)",
 											"type": "Expression"
 										},
 										"FileName": {
-											"value": "Comments",
+											"value": "CommentsInfo",
 											"type": "Expression"
 										}
 									}

@@ -5,14 +5,23 @@
 			"referenceName": "ls_blob_ytrawdata",
 			"type": "LinkedServiceReference"
 		},
+		"parameters": {
+			"SubFolder": {
+				"type": "string"
+			}
+		},
 		"annotations": [],
 		"type": "Parquet",
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
+				"folderPath": {
+					"value": "@dataset().SubFolder",
+					"type": "Expression"
+				},
 				"container": "cleaneddata"
 			},
-			"compressionCodec": "snappy"
+			"compressionCodec": "none"
 		},
 		"schema": [
 			{

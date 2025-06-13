@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Lookup-channels",
+				"name": "Lookup Into each VideoID",
 				"type": "Lookup",
 				"dependsOn": [],
 				"policy": {
@@ -16,28 +16,39 @@
 				"userProperties": [],
 				"typeProperties": {
 					"source": {
-						"type": "SnowflakeV2Source",
-						"query": "select channel_id , channel_name from YOUTUBE_DATABASE.YT_SCHEMA.YT_CHANNELS_TABLE where  fetch_enabled= TRUE;",
-						"exportSettings": {
-							"type": "SnowflakeExportCopyCommand"
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
 						}
 					},
 					"dataset": {
-						"referenceName": "Yt_Snowflake_table",
+						"referenceName": "Yt_data_store",
 						"type": "DatasetReference",
 						"parameters": {
-							"TableName": "YT_CHANNELS_DATA"
+							"SubFolder": {
+								"value": "@pipeline().parameters.ChannelName",
+								"type": "Expression"
+							},
+							"FileName": {
+								"value": "AllVideoIds",
+								"type": "Expression"
+							}
 						}
 					},
 					"firstRowOnly": false
 				}
 			},
 			{
-				"name": "ForEach-ChannelID",
+				"name": "For Each VideoId",
 				"type": "ForEach",
 				"dependsOn": [
 					{
-						"activity": "Lookup-channels",
+						"activity": "Lookup Into each VideoID",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -46,12 +57,13 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@activity('Lookup-channels').output.value",
+						"value": "@activity('Lookup Into each VideoID').output.value[0].items",
 						"type": "Expression"
 					},
+					"isSequential": false,
 					"activities": [
 						{
-							"name": "Fetch-Channel-data",
+							"name": "Fetch-VideoId-data-channel",
 							"type": "WebActivity",
 							"state": "Inactive",
 							"onInactiveMarkAs": "Succeeded",
@@ -67,17 +79,17 @@
 							"typeProperties": {
 								"method": "GET",
 								"url": {
-									"value": "@concat(\n  'https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&id=',\n  item().channel_id,\n  '&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc&maxResults=50'\n)",
+									"value": "@concat('https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=', item().id.videoId,'&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc')\n",
 									"type": "Expression"
 								}
 							}
 						},
 						{
-							"name": "Yt-Channeldata-Store",
+							"name": "Yt-VideoId-detail-store",
 							"type": "Copy",
 							"dependsOn": [
 								{
-									"activity": "Fetch-Channel-data",
+									"activity": "Fetch-VideoId-data-channel",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -119,7 +131,7 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"RelativeURL": {
-											"value": "@concat(\n  'channels?part=snippet,statistics&id=',\n  item().channel_id,\n  '&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc&maxResults=50'\n)",
+											"value": "@concat('videos?part=snippet,statistics,contentDetails&id=', item().id.videoId, '&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc')\n",
 											"type": "Expression"
 										}
 									}
@@ -131,11 +143,11 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"SubFolder": {
-											"value": "@item().channel_name",
+											"value": "@concat(item().channelTitle,'/',item().id.videoId)",
 											"type": "Expression"
 										},
 										"FileName": {
-											"value": "@item().channel_name",
+											"value": "VideoInfo",
 											"type": "Expression"
 										}
 									}
@@ -143,13 +155,13 @@
 							]
 						},
 						{
-							"name": "Fetch-All-Videos-data",
+							"name": "Fetch-Comments-data",
 							"type": "WebActivity",
 							"state": "Inactive",
 							"onInactiveMarkAs": "Succeeded",
 							"dependsOn": [
 								{
-									"activity": "Yt-Channeldata-Store",
+									"activity": "Yt-VideoId-detail-store",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -166,17 +178,17 @@
 							"typeProperties": {
 								"method": "GET",
 								"url": {
-									"value": "@concat('https://www.googleapis.com/youtube/v3/search?channelId=', item().channel_id, '&type=video&part=snippet&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc&maxResults=50')",
+									"value": "@concat('https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=', item().id.videoId, '&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc')\n",
 									"type": "Expression"
 								}
 							}
 						},
 						{
-							"name": "Yt-All-Videos-data-Store",
+							"name": "Yt-Comments-data-Store",
 							"type": "Copy",
 							"dependsOn": [
 								{
-									"activity": "Fetch-All-Videos-data",
+									"activity": "Fetch-Comments-data",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -218,7 +230,7 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"RelativeURL": {
-											"value": "@concat('search?channelId=', item().channel_id, '&type=video&part=snippet&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc&maxResults=50')",
+											"value": "@concat('commentThreads?part=snippet&videoId=', item().id.videoId, '&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc')\n\n\n",
 											"type": "Expression"
 										}
 									}
@@ -230,10 +242,13 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"SubFolder": {
-											"value": "@concat(item().channel_name,'/')",
+											"value": "@concat(item().channelTitle,'/',item().id.videoId)",
 											"type": "Expression"
 										},
-										"FileName": "AllVideoIds"
+										"FileName": {
+											"value": "Comments",
+											"type": "Expression"
+										}
 									}
 								}
 							]
@@ -242,6 +257,11 @@
 				}
 			}
 		],
+		"parameters": {
+			"ChannelName": {
+				"type": "string"
+			}
+		},
 		"annotations": []
 	}
 }

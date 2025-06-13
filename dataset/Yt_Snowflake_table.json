@@ -5,6 +5,11 @@
 			"referenceName": "ls_Snowflake",
 			"type": "LinkedServiceReference"
 		},
+		"parameters": {
+			"TableName": {
+				"type": "string"
+			}
+		},
 		"annotations": [],
 		"type": "SnowflakeV2Table",
 		"schema": [
@@ -23,7 +28,10 @@
 		],
 		"typeProperties": {
 			"schema": "YT_SCHEMA",
-			"table": "YT_CHANNELS_TABLE"
+			"table": {
+				"value": "@dataset().TableName",
+				"type": "Expression"
+			}
 		}
 	},
 	"type": "Microsoft.DataFactory/factories/datasets"

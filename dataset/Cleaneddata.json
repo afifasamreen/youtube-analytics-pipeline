@@ -1,0 +1,44 @@
+{
+	"name": "Cleaneddata",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_blob_ytrawdata",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"container": "cleaneddata"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": [
+			{
+				"name": "channel_id",
+				"type": "UTF8"
+			},
+			{
+				"name": "channel_title",
+				"type": "UTF8"
+			},
+			{
+				"name": "published_at",
+				"type": "UTF8"
+			},
+			{
+				"name": "subscriber_count",
+				"type": "UTF8"
+			},
+			{
+				"name": "view_count",
+				"type": "UTF8"
+			},
+			{
+				"name": "video_count",
+				"type": "UTF8"
+			}
+		]
+	}
+}

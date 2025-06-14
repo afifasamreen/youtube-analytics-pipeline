@@ -389,6 +389,10 @@
 								}
 							},
 							{
+								"source": {
+									"name": "published_at",
+									"type": "DateTime"
+								},
 								"sink": {
 									"name": "DATE_ID",
 									"type": "DateTime"

@@ -27,7 +27,7 @@
 			}
 		],
 		"typeProperties": {
-			"schema": "YT_SCHEMA",
+			"schema": "YT_SILVER_SCHEMA",
 			"table": {
 				"value": "@dataset().TableName",
 				"type": "Expression"

@@ -64,6 +64,11 @@
 						"storeSettings": {
 							"type": "AzureBlobStorageReadSettings",
 							"recursive": true,
+							"wildcardFolderPath": "Video-data",
+							"wildcardFileName": {
+								"value": "*.parquet",
+								"type": "Expression"
+							},
 							"enablePartitionDiscovery": false
 						},
 						"formatSettings": {
@@ -76,7 +81,15 @@
 							"type": "SnowflakeImportCopyCommand"
 						}
 					},
-					"enableStaging": false,
+					"enableStaging": true,
+					"stagingSettings": {
+						"linkedServiceName": {
+							"referenceName": "SAS_ls",
+							"type": "LinkedServiceReference"
+						},
+						"path": "stage",
+						"enableCompression": true
+					},
 					"translator": {
 						"type": "TabularTranslator",
 						"mappings": [
@@ -191,6 +204,11 @@
 						"storeSettings": {
 							"type": "AzureBlobStorageReadSettings",
 							"recursive": true,
+							"wildcardFolderPath": "Channel-data",
+							"wildcardFileName": {
+								"value": "*.parquet",
+								"type": "Expression"
+							},
 							"enablePartitionDiscovery": false
 						},
 						"formatSettings": {
@@ -203,7 +221,14 @@
 							"type": "SnowflakeImportCopyCommand"
 						}
 					},
-					"enableStaging": false,
+					"enableStaging": true,
+					"stagingSettings": {
+						"linkedServiceName": {
+							"referenceName": "ls_blob_ytrawdata",
+							"type": "LinkedServiceReference"
+						},
+						"path": "stage"
+					},
 					"translator": {
 						"type": "TabularTranslator",
 						"mappings": [
@@ -315,6 +340,11 @@
 						"storeSettings": {
 							"type": "AzureBlobStorageReadSettings",
 							"recursive": true,
+							"wildcardFolderPath": "Video-data",
+							"wildcardFileName": {
+								"value": "*.parquet",
+								"type": "Expression"
+							},
 							"enablePartitionDiscovery": false
 						},
 						"formatSettings": {
@@ -327,7 +357,14 @@
 							"type": "SnowflakeImportCopyCommand"
 						}
 					},
-					"enableStaging": false,
+					"enableStaging": true,
+					"stagingSettings": {
+						"linkedServiceName": {
+							"referenceName": "ls_blob_ytrawdata",
+							"type": "LinkedServiceReference"
+						},
+						"path": "stage"
+					},
 					"translator": {
 						"type": "TabularTranslator",
 						"mappings": [
@@ -352,10 +389,6 @@
 								}
 							},
 							{
-								"source": {
-									"name": "published_at",
-									"type": "String"
-								},
 								"sink": {
 									"name": "DATE_ID",
 									"type": "DateTime"
@@ -480,6 +513,11 @@
 						"storeSettings": {
 							"type": "AzureBlobStorageReadSettings",
 							"recursive": true,
+							"wildcardFolderPath": "Video-data",
+							"wildcardFileName": {
+								"value": "*.parquet",
+								"type": "Expression"
+							},
 							"enablePartitionDiscovery": false
 						},
 						"formatSettings": {
@@ -492,12 +530,70 @@
 							"type": "SnowflakeImportCopyCommand"
 						}
 					},
-					"enableStaging": false
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "published_at",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "DATE_ID",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"name": "video_title",
+									"type": "String"
+								},
+								"sink": {
+									"name": "DAY",
+									"type": "Int64"
+								}
+							},
+							{
+								"source": {
+									"name": "channel_title",
+									"type": "String"
+								},
+								"sink": {
+									"name": "MONTH",
+									"type": "Int64"
+								}
+							},
+							{
+								"source": {
+									"name": "duration",
+									"type": "String"
+								},
+								"sink": {
+									"name": "YEAR",
+									"type": "Int64"
+								}
+							},
+							{
+								"source": {
+									"name": "channel_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "WEEKDAY_NAME",
+									"type": "String"
+								}
+							}
+						]
+					}
 				},
 				"inputs": [
 					{
 						"referenceName": "Cleaneddata",
-						"type": "DatasetReference"
+						"type": "DatasetReference",
+						"parameters": {
+							"SubFolder": "Video-data"
+						}
 					}
 				],
 				"outputs": [

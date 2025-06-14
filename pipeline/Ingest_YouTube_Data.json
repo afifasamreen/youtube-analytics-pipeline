@@ -224,7 +224,7 @@
 					"enableStaging": true,
 					"stagingSettings": {
 						"linkedServiceName": {
-							"referenceName": "ls_blob_ytrawdata",
+							"referenceName": "SAS_ls",
 							"type": "LinkedServiceReference"
 						},
 						"path": "stage"
@@ -360,7 +360,7 @@
 					"enableStaging": true,
 					"stagingSettings": {
 						"linkedServiceName": {
-							"referenceName": "ls_blob_ytrawdata",
+							"referenceName": "SAS_ls",
 							"type": "LinkedServiceReference"
 						},
 						"path": "stage"

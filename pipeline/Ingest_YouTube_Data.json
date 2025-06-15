@@ -44,16 +44,7 @@
 			{
 				"name": "Yt-Cleaned-Transf-data-Store",
 				"type": "Copy",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
-				"dependsOn": [
-					{
-						"activity": "YT-Transformations",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -627,6 +618,7 @@
 			},
 			{
 				"name": "Lookup-channels",
+				"description": "Passing channel Id and name from snowflake table",
 				"type": "Lookup",
 				"state": "Inactive",
 				"onInactiveMarkAs": "Succeeded",
@@ -659,6 +651,7 @@
 			},
 			{
 				"name": "ForEach-ChannelID",
+				"description": "Looping into each channel Id storing that channel info, Video Id and again looping through each video Id, storing that video info (same as Video info for comments info as well)",
 				"type": "ForEach",
 				"state": "Inactive",
 				"onInactiveMarkAs": "Succeeded",
@@ -679,38 +672,10 @@
 					"isSequential": false,
 					"activities": [
 						{
-							"name": "Fetch-Channel-data",
-							"type": "WebActivity",
-							"state": "Inactive",
-							"onInactiveMarkAs": "Succeeded",
-							"dependsOn": [],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"method": "GET",
-								"url": {
-									"value": "@concat(\n  'https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&id=',\n  item().channel_id,\n  '&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc&maxResults=50'\n)",
-									"type": "Expression"
-								}
-							}
-						},
-						{
 							"name": "Yt-Channeldata-Store",
+							"description": "Storing Channels Info into blob from URL\n(As loop)",
 							"type": "Copy",
-							"dependsOn": [
-								{
-									"activity": "Fetch-Channel-data",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
+							"dependsOn": [],
 							"policy": {
 								"timeout": "0.12:00:00",
 								"retry": 0,
@@ -771,40 +736,12 @@
 							]
 						},
 						{
-							"name": "Fetch-All-Videos-data",
-							"type": "WebActivity",
-							"state": "Inactive",
-							"onInactiveMarkAs": "Succeeded",
-							"dependsOn": [
-								{
-									"activity": "Yt-Channeldata-Store",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"method": "GET",
-								"url": {
-									"value": "@concat('https://www.googleapis.com/youtube/v3/search?channelId=', item().channel_id, '&type=video&part=snippet&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc&maxResults=50')",
-									"type": "Expression"
-								}
-							}
-						},
-						{
 							"name": "Yt-All-Videos-data-Store",
+							"description": "Storing All video Ids of a channel into blob from URL (as loop)",
 							"type": "Copy",
 							"dependsOn": [
 								{
-									"activity": "Fetch-All-Videos-data",
+									"activity": "Yt-Channeldata-Store",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -868,6 +805,7 @@
 						},
 						{
 							"name": "Execute Video_Comment pipeline",
+							"description": "Fetching and storing each video info and its comment info",
 							"type": "ExecutePipeline",
 							"dependsOn": [
 								{
@@ -883,7 +821,7 @@
 							"userProperties": [],
 							"typeProperties": {
 								"pipeline": {
-									"referenceName": "Sub-pipeline-channels",
+									"referenceName": "Video-Comments-Sub_pipeline",
 									"type": "PipelineReference"
 								},
 								"waitOnCompletion": true,
@@ -964,6 +902,29 @@
 						}
 					}
 				]
+			},
+			{
+				"name": "Execute Snowflake pipeline",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "YT-Transformations",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Snowflake-Cleaneddata-Sub_pipeline",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
 			}
 		],
 		"parameters": {

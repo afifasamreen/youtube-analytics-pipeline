@@ -1,0 +1,271 @@
+{
+	"name": "Snowflake-Cleaneddata-Sub_pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "Yt-Cleaned-Dim_Video-data-Store",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": "Video-data",
+							"wildcardFileName": {
+								"value": "*.parquet",
+								"type": "Expression"
+							},
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
+					"sink": {
+						"type": "SnowflakeV2Sink",
+						"importSettings": {
+							"type": "SnowflakeImportCopyCommand"
+						}
+					},
+					"enableStaging": true,
+					"stagingSettings": {
+						"linkedServiceName": {
+							"referenceName": "SAS_ls",
+							"type": "LinkedServiceReference"
+						},
+						"path": "stage",
+						"enableCompression": true
+					},
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "video_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "VIDEO_ID",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "video_title",
+									"type": "String"
+								},
+								"sink": {
+									"name": "VIDEO_TITLE",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "tags",
+									"type": "String"
+								},
+								"sink": {
+									"name": "TAGS",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "tag_count",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "TAG_COUNT",
+									"type": "Int64"
+								}
+							},
+							{
+								"source": {
+									"name": "duration",
+									"type": "String"
+								},
+								"sink": {
+									"name": "DURATION",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "duration_minutes",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "DURATION_MINUTES",
+									"type": "Int64"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "Cleaneddata",
+						"type": "DatasetReference",
+						"parameters": {
+							"SubFolder": "Video-data"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "Yt_Snowflake_table",
+						"type": "DatasetReference",
+						"parameters": {
+							"TableName": {
+								"value": "DIM_VIDEO",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "Yt-Cleaned-Channel-data-Store",
+				"description": "storing channel data clean and transformed into dimension table in snowflake",
+				"type": "Copy",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": "Channel-data",
+							"wildcardFileName": {
+								"value": "*.parquet",
+								"type": "Expression"
+							},
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
+					"sink": {
+						"type": "SnowflakeV2Sink",
+						"importSettings": {
+							"type": "SnowflakeImportCopyCommand"
+						}
+					},
+					"enableStaging": true,
+					"stagingSettings": {
+						"linkedServiceName": {
+							"referenceName": "SAS_ls",
+							"type": "LinkedServiceReference"
+						},
+						"path": "stage"
+					},
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "channel_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CHANNEL_ID",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "channel_title",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CHANNEL_TITLE",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "published_at",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PUBLISHED_AT",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"name": "subscriber_count",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SUBSCRIBER_COUNT",
+									"type": "Int64"
+								}
+							},
+							{
+								"source": {
+									"name": "view_count",
+									"type": "String"
+								},
+								"sink": {
+									"name": "VIEW_COUNT",
+									"type": "Int64"
+								}
+							},
+							{
+								"source": {
+									"name": "video_count",
+									"type": "String"
+								},
+								"sink": {
+									"name": "VIDEO_COUNT",
+									"type": "Int64"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "Cleaneddata",
+						"type": "DatasetReference",
+						"parameters": {
+							"SubFolder": "Channel-data"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "Yt_Snowflake_table",
+						"type": "DatasetReference",
+						"parameters": {
+							"TableName": "DIM_CHANNEL"
+						}
+					}
+				]
+			}
+		],
+		"annotations": []
+	}
+}

@@ -226,6 +226,50 @@
 						"type": "DatasetReference"
 					}
 				]
+			},
+			{
+				"name": "Fetch-Channel-data",
+				"type": "WebActivity",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"url": {
+						"value": "@concat(\n  'https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&id=',\n  item().channel_id,\n  '&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc&maxResults=50'\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Fetch-All-Videos-data",
+				"type": "WebActivity",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"url": {
+						"value": "@concat('https://www.googleapis.com/youtube/v3/search?channelId=', item().channel_id, '&type=video&part=snippet&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc&maxResults=50')",
+						"type": "Expression"
+					}
+				}
 			}
 		],
 		"annotations": [],

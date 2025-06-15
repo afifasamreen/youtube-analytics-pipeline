@@ -4,6 +4,7 @@
 		"activities": [
 			{
 				"name": "Lookup Into each VideoID",
+				"description": "Passing Video Id from Video Ids file",
 				"type": "Lookup",
 				"dependsOn": [],
 				"policy": {
@@ -45,6 +46,7 @@
 			},
 			{
 				"name": "For Each VideoId",
+				"description": "Looping each video Id and storing its Video info and comments info into blob",
 				"type": "ForEach",
 				"dependsOn": [
 					{
@@ -63,38 +65,10 @@
 					"isSequential": false,
 					"activities": [
 						{
-							"name": "Fetch-VideoId-data-channel",
-							"type": "WebActivity",
-							"state": "Inactive",
-							"onInactiveMarkAs": "Succeeded",
-							"dependsOn": [],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"method": "GET",
-								"url": {
-									"value": "@concat('https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=', item().id.videoId,'&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc')\n",
-									"type": "Expression"
-								}
-							}
-						},
-						{
-							"name": "Yt-VideoId-detail-store",
+							"name": "Yt-Video-detail-data-store",
+							"description": "Storing Video Info into blob from URL\n(As loop)",
 							"type": "Copy",
-							"dependsOn": [
-								{
-									"activity": "Fetch-VideoId-data-channel",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
+							"dependsOn": [],
 							"policy": {
 								"timeout": "0.12:00:00",
 								"retry": 0,
@@ -155,40 +129,12 @@
 							]
 						},
 						{
-							"name": "Fetch-Comments-data",
-							"type": "WebActivity",
-							"state": "Inactive",
-							"onInactiveMarkAs": "Succeeded",
-							"dependsOn": [
-								{
-									"activity": "Yt-VideoId-detail-store",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"method": "GET",
-								"url": {
-									"value": "@concat('https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=', item().id.videoId, '&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc')\n",
-									"type": "Expression"
-								}
-							}
-						},
-						{
 							"name": "Yt-Comments-data-Store",
+							"description": "Storing Comments Info into blob from URL\n(As loop)",
 							"type": "Copy",
 							"dependsOn": [
 								{
-									"activity": "Fetch-Comments-data",
+									"activity": "Yt-Video-detail-data-store",
 									"dependencyConditions": [
 										"Succeeded"
 									]

@@ -6,7 +6,7 @@
 			"sources": [
 				{
 					"dataset": {
-						"referenceName": "Yt_data",
+						"referenceName": "Yt_data_store",
 						"type": "DatasetReference"
 					},
 					"name": "AllVideosSource"
@@ -15,7 +15,7 @@
 			"sinks": [
 				{
 					"dataset": {
-						"referenceName": "Yt_data",
+						"referenceName": "Yt_data_store",
 						"type": "DatasetReference"
 					},
 					"name": "YtVideoIdsOnlyStore",
@@ -34,15 +34,7 @@
 				}
 			],
 			"scriptLines": [
-				"source(output(",
-				"          etag as string,",
-				"          items as (etag as string, id as (kind as string, videoId as string), kind as string, snippet as (channelId as string, channelTitle as string, description as string, liveBroadcastContent as string, publishTime as timestamp, publishedAt as timestamp, thumbnails as (default as (height as short, url as string, width as short), high as (height as short, url as string, width as short), medium as (height as short, url as string, width as short)), title as string))[],",
-				"          kind as string,",
-				"          nextPageToken as string,",
-				"          pageInfo as (resultsPerPage as short, totalResults as short),",
-				"          regionCode as string",
-				"     ),",
-				"     allowSchemaDrift: true,",
+				"source(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false,",
 				"     documentForm: 'documentPerLine') ~> AllVideosSource",

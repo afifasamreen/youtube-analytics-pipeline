@@ -135,11 +135,9 @@
 				]
 			},
 			{
-				"name": "Yt-Cleaned-Channel-data-Store",
+				"name": "Yt-Cleaned-dim_Channel-data-Store",
 				"description": "storing channel data clean and transformed into dimension table in snowflake",
 				"type": "Copy",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
@@ -261,6 +259,353 @@
 						"type": "DatasetReference",
 						"parameters": {
 							"TableName": "DIM_CHANNEL"
+						}
+					}
+				]
+			},
+			{
+				"name": "Yt-Cleaned-fact_Video-data-Store",
+				"description": "storing the video data as fact table in snowflake",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": "Video-data",
+							"wildcardFileName": {
+								"value": "*.parquet",
+								"type": "Expression"
+							},
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
+					"sink": {
+						"type": "SnowflakeV2Sink",
+						"importSettings": {
+							"type": "SnowflakeImportCopyCommand"
+						}
+					},
+					"enableStaging": true,
+					"stagingSettings": {
+						"linkedServiceName": {
+							"referenceName": "SAS_ls",
+							"type": "LinkedServiceReference"
+						},
+						"path": "stage"
+					},
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "video_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "VIDEO_ID",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "channel_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CHANNEL_ID",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "published_at",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "DATE_ID",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"name": "view_count",
+									"type": "String"
+								},
+								"sink": {
+									"name": "VIEW_COUNT",
+									"type": "Int64"
+								}
+							},
+							{
+								"source": {
+									"name": "like_count",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LIKE_COUNT",
+									"type": "Int64"
+								}
+							},
+							{
+								"source": {
+									"name": "comment_count",
+									"type": "String"
+								},
+								"sink": {
+									"name": "COMMENT_COUNT",
+									"type": "Int64"
+								}
+							},
+							{
+								"source": {
+									"name": "engagement_rate",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "ENGAGEMENT_RATE",
+									"type": "Double"
+								}
+							},
+							{
+								"source": {
+									"name": "days_since_upload",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "DAYS_SINCE_UPLOAD",
+									"type": "Int64"
+								}
+							},
+							{
+								"source": {
+									"name": "view_velocity",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "VIEW_VELOCITY",
+									"type": "Double"
+								}
+							},
+							{
+								"source": {
+									"name": "video_age_days",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "VIDEO_AGE_DAYS",
+									"type": "Int64"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "Cleaneddata",
+						"type": "DatasetReference",
+						"parameters": {
+							"SubFolder": "Video-data"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "Yt_Snowflake_table",
+						"type": "DatasetReference",
+						"parameters": {
+							"TableName": "FACT_VIDEO_METRICS"
+						}
+					}
+				]
+			},
+			{
+				"name": "Yt-Cleaned-dim_Date-data-Store",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": "Video-data",
+							"wildcardFileName": {
+								"value": "*.parquet",
+								"type": "Expression"
+							},
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
+					"sink": {
+						"type": "SnowflakeV2Sink",
+						"importSettings": {
+							"type": "SnowflakeImportCopyCommand"
+						}
+					},
+					"enableStaging": true,
+					"stagingSettings": {
+						"linkedServiceName": {
+							"referenceName": "SAS_ls",
+							"type": "LinkedServiceReference"
+						},
+						"path": "stage"
+					},
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "published_at",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "DATE_ID",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"name": "video_title",
+									"type": "String"
+								},
+								"sink": {
+									"name": "DAY",
+									"type": "Int64"
+								}
+							},
+							{
+								"source": {
+									"name": "channel_title",
+									"type": "String"
+								},
+								"sink": {
+									"name": "MONTH",
+									"type": "Int64"
+								}
+							},
+							{
+								"source": {
+									"name": "duration",
+									"type": "String"
+								},
+								"sink": {
+									"name": "YEAR",
+									"type": "Int64"
+								}
+							},
+							{
+								"source": {
+									"name": "channel_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "WEEKDAY_NAME",
+									"type": "String"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "Cleaneddata",
+						"type": "DatasetReference",
+						"parameters": {
+							"SubFolder": "Video-data"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "Yt_Snowflake_table",
+						"type": "DatasetReference",
+						"parameters": {
+							"TableName": "DIM_DATE"
+						}
+					}
+				]
+			},
+			{
+				"name": "Yt-Cleaned-fact_Comments-data-Store",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": "Comment-data",
+							"wildcardFileName": "*.parquet",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
+					"sink": {
+						"type": "SnowflakeV2Sink",
+						"importSettings": {
+							"type": "SnowflakeImportCopyCommand"
+						}
+					},
+					"enableStaging": true,
+					"stagingSettings": {
+						"linkedServiceName": {
+							"referenceName": "SAS_ls",
+							"type": "LinkedServiceReference"
+						},
+						"path": "stage"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "Cleaneddata",
+						"type": "DatasetReference",
+						"parameters": {
+							"SubFolder": "Comment-data"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "Yt_Snowflake_table",
+						"type": "DatasetReference",
+						"parameters": {
+							"TableName": "FACT_COMMENTS"
 						}
 					}
 				]

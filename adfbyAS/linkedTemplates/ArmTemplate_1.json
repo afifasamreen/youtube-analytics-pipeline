@@ -1,0 +1,653 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "adfbyAS"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Yt-ChannelStats",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "GET",
+							"headers": {},
+							"url": "https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&id=UCXQnpama_0lAzj_4MAdZ5vw&key=AIzaSyDWZTMscDBpW33tzqYP21UmE6nxnwVk7Wg"
+						}
+					},
+					{
+						"name": "Yt-ChannelStats-Store",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Yt-ChannelStats",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "RestSource",
+								"httpRequestTimeout": "00:01:40",
+								"requestInterval": "00.00:00:00.010",
+								"requestMethod": "GET",
+								"paginationRules": {
+									"supportRFC5988": "true"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings",
+									"copyBehavior": "FlattenHierarchy"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "ls_youtube_channel_rest",
+								"type": "DatasetReference",
+								"parameters": {
+									"ChannelId": "UCXQnpama_0lAzj_4MAdZ5vw"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "Yt_ChannelStats_store",
+								"type": "DatasetReference",
+								"parameters": {
+									"SubFolder": "Channel-Stats"
+								}
+							}
+						]
+					},
+					{
+						"name": "Yt-VideoStats",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "GET",
+							"headers": {},
+							"url": "https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=tHv-Cdb7yEw&key=AIzaSyDWZTMscDBpW33tzqYP21UmE6nxnwVk7Wg"
+						}
+					},
+					{
+						"name": "Yt-VideoStats-Store",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Yt-VideoStats",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "RestSource",
+								"httpRequestTimeout": "00:01:40",
+								"requestInterval": "00.00:00:00.010",
+								"requestMethod": "GET",
+								"paginationRules": {
+									"supportRFC5988": "true"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings",
+									"copyBehavior": "FlattenHierarchy"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_youtube_Video_rest",
+								"type": "DatasetReference",
+								"parameters": {
+									"VideoId": "tHv-Cdb7yEw"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "Yt_VideoStats_store",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "Yt-CommentsStats",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "GET",
+							"headers": {},
+							"url": "https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=tHv-Cdb7yEw&key=AIzaSyDWZTMscDBpW33tzqYP21UmE6nxnwVk7Wg"
+						}
+					},
+					{
+						"name": "Yt-CommentsStats-Store",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Yt-CommentsStats",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "RestSource",
+								"httpRequestTimeout": "00:01:40",
+								"requestInterval": "00.00:00:00.010",
+								"requestMethod": "GET",
+								"paginationRules": {
+									"supportRFC5988": "true"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings",
+									"copyBehavior": "FlattenHierarchy"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_youtube_comments_rest",
+								"type": "DatasetReference",
+								"parameters": {
+									"VideoId": "tHv-Cdb7yEw"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "Yt_CommentsStats_store",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "Fetch-Channel-data",
+						"type": "WebActivity",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "GET",
+							"headers": {},
+							"url": {
+								"value": "@concat(\n  'https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&id=',\n  item().channel_id,\n  '&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc&maxResults=50'\n)",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Fetch-All-Videos-data",
+						"type": "WebActivity",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "GET",
+							"headers": {},
+							"url": {
+								"value": "@concat('https://www.googleapis.com/youtube/v3/search?channelId=', item().channel_id, '&type=video&part=snippet&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc&maxResults=50')",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Fetch-VideoId-data-channel",
+						"type": "WebActivity",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "GET",
+							"headers": {},
+							"url": {
+								"value": "@concat('https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=', item().id.videoId,'&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc')\n",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Fetch-Comments-data",
+						"type": "WebActivity",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "GET",
+							"headers": {},
+							"url": {
+								"value": "@concat('https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=', item().id.videoId, '&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc')\n",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-06-12T06:41:51Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Ingest_YouTube_Data')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "YT-Transformations",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "ForEach-ChannelID",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/afifa.samreen@anblicks.com/YT-Transformations",
+							"baseParameters": {
+								"ingest_date": {
+									"value": "@utcNow('yyyy-MM-dd')",
+									"type": "Expression"
+								},
+								"channel_name": {
+									"value": "@pipeline().parameters.ChannelName",
+									"type": "Expression"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "Databricks_YTProject_LS",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Lookup-channels",
+						"description": "Passing channel Id and name from snowflake table",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SnowflakeV2Source",
+								"query": "select channel_id , channel_name from YOUTUBE_DATABASE.YT_SCHEMA.YT_CHANNELS_TABLE where  fetch_enabled= TRUE;",
+								"exportSettings": {
+									"type": "SnowflakeExportCopyCommand"
+								}
+							},
+							"dataset": {
+								"referenceName": "Yt_Snowflake_table",
+								"type": "DatasetReference",
+								"parameters": {
+									"TableName": "YT_CHANNELS_DATA"
+								}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "ForEach-ChannelID",
+						"description": "Looping into each channel Id storing that channel info, Video Id and again looping through each video Id, storing that video info (same as Video info for comments info as well)",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Lookup-channels",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Lookup-channels').output.value",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"activities": [
+								{
+									"name": "Yt-Channeldata-Store",
+									"description": "Storing Channels Info into blob from URL\n(As loop)",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "RestSource",
+											"httpRequestTimeout": "00:01:40",
+											"requestInterval": "00.00:00:00.010",
+											"requestMethod": "GET",
+											"paginationRules": {
+												"supportRFC5988": "true"
+											}
+										},
+										"sink": {
+											"type": "JsonSink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings",
+												"copyBehavior": "FlattenHierarchy"
+											},
+											"formatSettings": {
+												"type": "JsonWriteSettings"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "Yt_URL_fetch",
+											"type": "DatasetReference",
+											"parameters": {
+												"RelativeURL": {
+													"value": "@concat(\n  'channels?part=snippet,statistics&id=',\n  item().channel_id,\n  '&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc&maxResults=50'\n)",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "Yt_data_store",
+											"type": "DatasetReference",
+											"parameters": {
+												"SubFolder": {
+													"value": "@item().channel_name",
+													"type": "Expression"
+												},
+												"FileName": {
+													"value": "ChannelInfo",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								},
+								{
+									"name": "Yt-All-Videos-data-Store",
+									"description": "Storing All video Ids of a channel into blob from URL (as loop)",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Yt-Channeldata-Store",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "RestSource",
+											"httpRequestTimeout": "00:01:40",
+											"requestInterval": "00.00:00:00.010",
+											"requestMethod": "GET",
+											"paginationRules": {
+												"supportRFC5988": "true"
+											}
+										},
+										"sink": {
+											"type": "JsonSink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings",
+												"copyBehavior": "FlattenHierarchy"
+											},
+											"formatSettings": {
+												"type": "JsonWriteSettings"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "Yt_URL_fetch",
+											"type": "DatasetReference",
+											"parameters": {
+												"RelativeURL": {
+													"value": "@concat('search?channelId=', item().channel_id, '&type=video&part=snippet&key=AIzaSyBCQ1GX9GVo768TWIaIWB02YauKYiBVgnc&maxResults=50')",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "Yt_data_store",
+											"type": "DatasetReference",
+											"parameters": {
+												"SubFolder": {
+													"value": "@concat(item().channel_name)",
+													"type": "Expression"
+												},
+												"FileName": "AllVideoIds"
+											}
+										}
+									]
+								},
+								{
+									"name": "Execute Video_Comment pipeline",
+									"description": "Fetching and storing each video info and its comment info",
+									"type": "ExecutePipeline",
+									"dependsOn": [
+										{
+											"activity": "Yt-All-Videos-data-Store",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "Video-Comments-Sub_pipeline",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"ChannelName": {
+												"value": "@item().channel_name",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "Execute Snowflake pipeline",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "YT-Transformations",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Snowflake-Cleaneddata-Sub_pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"VideoIdList": {
+						"type": "array"
+					},
+					"ChannelName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-06-12T06:45:00Z"
+			},
+			"dependsOn": []
+		}
+	]
+}

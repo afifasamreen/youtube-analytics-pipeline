@@ -17,6 +17,12 @@
 		"Databricks_YTProject_LS_properties_typeProperties_existingClusterId": {
 			"value": "0609-070659-64vpyt4h"
 		},
+		"SAS_ls_sasUri": {
+			"value": ""
+		},
+		"SaS_ADLS_sasUri": {
+			"value": ""
+		},
 		"ls_Http_yt_properties_typeProperties_url": {
 			"value": "https://www.googleapis.com/youtube/v3"
 		},

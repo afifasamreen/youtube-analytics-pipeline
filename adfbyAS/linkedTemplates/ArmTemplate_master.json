@@ -23,6 +23,14 @@
 			"type": "string",
 			"defaultValue": "0609-070659-64vpyt4h"
 		},
+		"SAS_ls_sasUri": {
+			"type": "secureString",
+			"metadata": "Secure string for 'sasUri' of 'SAS_ls'"
+		},
+		"SaS_ADLS_sasUri": {
+			"type": "secureString",
+			"metadata": "Secure string for 'sasUri' of 'SaS_ADLS'"
+		},
 		"ls_Http_yt_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://www.googleapis.com/youtube/v3"
@@ -82,6 +90,12 @@
 					"Databricks_YTProject_LS_properties_typeProperties_existingClusterId": {
 						"value": "[parameters('Databricks_YTProject_LS_properties_typeProperties_existingClusterId')]"
 					},
+					"SAS_ls_sasUri": {
+						"value": "[parameters('SAS_ls_sasUri')]"
+					},
+					"SaS_ADLS_sasUri": {
+						"value": "[parameters('SaS_ADLS_sasUri')]"
+					},
 					"ls_Http_yt_properties_typeProperties_url": {
 						"value": "[parameters('ls_Http_yt_properties_typeProperties_url')]"
 					},
@@ -100,6 +114,26 @@
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "adfbyAS_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'adfbyAS_ArmTemplate_0')]"
+			]
 		}
 	]
 }

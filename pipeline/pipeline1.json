@@ -59,25 +59,7 @@
 						}
 					},
 					"enableStaging": false
-				},
-				"inputs": [
-					{
-						"referenceName": "ls_youtube_channel_rest",
-						"type": "DatasetReference",
-						"parameters": {
-							"ChannelId": "UCXQnpama_0lAzj_4MAdZ5vw"
-						}
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "Yt_ChannelStats_store",
-						"type": "DatasetReference",
-						"parameters": {
-							"SubFolder": "Channel-Stats"
-						}
-					}
-				]
+				}
 			},
 			{
 				"name": "Yt-VideoStats",
@@ -136,22 +118,7 @@
 						}
 					},
 					"enableStaging": false
-				},
-				"inputs": [
-					{
-						"referenceName": "ds_youtube_Video_rest",
-						"type": "DatasetReference",
-						"parameters": {
-							"VideoId": "tHv-Cdb7yEw"
-						}
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "Yt_VideoStats_store",
-						"type": "DatasetReference"
-					}
-				]
+				}
 			},
 			{
 				"name": "Yt-CommentsStats",
@@ -210,22 +177,7 @@
 						}
 					},
 					"enableStaging": false
-				},
-				"inputs": [
-					{
-						"referenceName": "ds_youtube_comments_rest",
-						"type": "DatasetReference",
-						"parameters": {
-							"VideoId": "tHv-Cdb7yEw"
-						}
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "Yt_CommentsStats_store",
-						"type": "DatasetReference"
-					}
-				]
+				}
 			},
 			{
 				"name": "Fetch-Channel-data",

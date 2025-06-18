@@ -155,7 +155,7 @@
 							]
 						},
 						{
-							"name": "Yt-All-Videos-data-Store",
+							"name": "Yt-All-VideoIds-data-Store",
 							"description": "Storing All video Ids of a channel into blob from URL (as loop)",
 							"type": "Copy",
 							"dependsOn": [
@@ -228,7 +228,7 @@
 							"type": "ExecutePipeline",
 							"dependsOn": [
 								{
-									"activity": "Yt-All-Videos-data-Store",
+									"activity": "Yt-All-VideoIds-data-Store",
 									"dependencyConditions": [
 										"Succeeded"
 									]
